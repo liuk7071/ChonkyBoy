@@ -14,11 +14,11 @@ public:
     union {     // AF
         u16 af;
         BitField <8, 8, u16> a;
-        u8 f;
         BitField <7, 1, u16> Z;
         BitField <6, 1, u16> N;
         BitField <5, 1, u16> HC;
         BitField <4, 1, u16> C;
+        BitField <0, 8, u16> f;
     };
     union {     // BC
         u16 bc;
