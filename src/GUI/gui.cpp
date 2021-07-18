@@ -84,7 +84,7 @@ void GUI::showMenuBar() {
 void GUI::showDisplay() {
     bool show = false;
     ImGui::Begin (("Display"), &show, ImGuiWindowFlags_NoTitleBar);
-    const auto size = ImGui::GetWindowSize();
+    const auto size = ImGui::GetContentRegionAvail();
     const auto scale_x = size.x / gb::width;
     const auto scale_y = size.y / gb::height;
     const auto scale = scale_x < scale_y ? scale_x : scale_y;
@@ -92,7 +92,9 @@ void GUI::showDisplay() {
     display.update (emulator.framebuffer.data()); // Present the buffer that's not being currently written to
     sf::Sprite sprite (display);
     sprite.setScale (scale, scale);
-    
+    ImVec2 image_size(scale * gb::width, scale * gb::height);
+    ImVec2 center((ImGui::GetWindowSize().x - image_size.x) / 2, (ImGui::GetWindowSize().y - image_size.y) / 2);
+    ImGui::SetCursorPos(center);
     ImGui::Image (sprite);
     ImGui::End();
     
