@@ -2,12 +2,12 @@
 #include "fmt/format.h"        // For fmt::print
 #include "tinyfiledialogs.h"   // For file explorer
 #include "gui.hpp"
-#include "MyEmulator.hpp"
+#include "gb.hpp"
 
-GUI::GUI (MyEmulator& emulator) : window(sf::VideoMode(800, 600), "SFML window"), emulator(emulator) {
+GUI::GUI (gb& emulator) : window(sf::VideoMode(800, 600), "ChonkyBoy"), emulator(emulator) {
     window.setFramerateLimit(60); // cap FPS to 60
     ImGui::SFML::Init(window);    // Init Imgui-SFML
-    display.create (MyEmulator::width, MyEmulator::height);
+    display.create (gb::width, gb::height);
 
     auto& io = ImGui::GetIO();  // Set some ImGui options
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable navigation with keyboard
@@ -42,19 +42,29 @@ void GUI::showMenuBar() {
     static const char* romTypes[] = { "*.bin", "*.rom" }; // Some generic filetypes for ROMs, configure as you want
     
     if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::MenuItem ("Open ROM")) { // Show file selection dialog if open ROM button is pressed
-            auto file = tinyfd_openFileDialog(
-                "Choose a ROM", // File explorer window title
-                "",             // Default directory
-                2,              // Amount of file types
-                romTypes,       // Array of file types
-                "ROMs",         // File type description in file explorer window
-                0);
+        if (ImGui::BeginMenu ("File")) { // Show file selection dialog if open ROM button is pressed
+            if (ImGui::MenuItem ("Open ROM", nullptr)) {
+                auto file = tinyfd_openFileDialog(
+                    "Choose a ROM", // File explorer window title
+                    "",             // Default directory
+                    2,              // Amount of file types
+                    romTypes,       // Array of file types
+                    "ROMs",         // File type description in file explorer window
+                    0);
 
-            if (file != nullptr) {  // Check if file dialog was canceled
-                const auto path = std::filesystem::path (file);
-                fmt::print ("Opened file {}\n", path.string());
+                if (file != nullptr) {  // Check if file dialog was canceled
+                    const auto path = std::filesystem::path (file);
+                    fmt::print ("Opened file {}\n", path.string());
+                }
             }
+            
+            if (ImGui::MenuItem ("Save state", nullptr))
+                fmt::print ("Save state");
+
+            if (ImGui::MenuItem ("Load state", nullptr))
+                fmt::print ("Load state");
+
+            ImGui::EndMenu();
         }
 
         if (ImGui::BeginMenu ("Emulation")) {
@@ -72,19 +82,20 @@ void GUI::showMenuBar() {
 // This is fairly slow, so for best measure if you don't want presentation to bottleneck emulation too much
 // You should have the emulator on a separate thread from the GUI
 void GUI::showDisplay() {
-    if (ImGui::Begin ("Display")) {
-        const auto size = ImGui::GetWindowSize();
-        const auto scale_x = size.x / MyEmulator::width;
-        const auto scale_y = size.y / MyEmulator::height;
-        const auto scale = scale_x < scale_y ? scale_x : scale_y;
+    bool show = false;
+    ImGui::Begin (("Display"), &show, ImGuiWindowFlags_NoTitleBar);
+    const auto size = ImGui::GetWindowSize();
+    const auto scale_x = size.x / gb::width;
+    const auto scale_y = size.y / gb::height;
+    const auto scale = scale_x < scale_y ? scale_x : scale_y;
 
-        display.update (emulator.framebuffer.data()); // Present the buffer that's not being currently written to
-        sf::Sprite sprite (display);
-        sprite.setScale (scale, scale);
-        
-        ImGui::Image (sprite);
-        ImGui::End();
-    }
+    display.update (emulator.framebuffer.data()); // Present the buffer that's not being currently written to
+    sf::Sprite sprite (display);
+    sprite.setScale (scale, scale);
+    
+    ImGui::Image (sprite);
+    ImGui::End();
+    
 }
 
 void GUI::drawGUI() {

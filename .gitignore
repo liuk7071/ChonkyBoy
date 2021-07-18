@@ -47,3 +47,9 @@ build/
 
 # VSC workspace
 *.code-workspace
+
+/.vscode
+/build
+
+
+

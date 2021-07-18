@@ -2,16 +2,16 @@
 #include <SFML/Graphics.hpp>
 #include "imgui.h"
 #include "imgui-SFML.h"
-#include "MyEmulator.hpp"
+#include "gb.hpp"
 
 class GUI {
     sf::RenderWindow window;
     sf::Clock deltaClock;
     sf::Texture display;
-    MyEmulator& emulator;
+    gb& emulator;
 
 public:
-    GUI (MyEmulator& emulator);
+    GUI (gb& emulator);
 
     void update(); // Update the GUI
     bool isOpen() { return window.isOpen(); } // Shows if the GUI window has been closed or not

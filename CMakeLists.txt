@@ -7,7 +7,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 set (IMGUI_DIR ../imgui) # Set Imgui dir for imgui-sfml to work
 
-project(MyEmulator)
+project(ChonkyBoy)
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 if(WIN32)
@@ -22,6 +22,8 @@ if(NOT SFML_FOUND)
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include/)
+include_directories(${PROJECT_SOURCE_DIR}/include/Core)
+include_directories(${PROJECT_SOURCE_DIR}/include/Cart)
 include_directories(${PROJECT_SOURCE_DIR}/include/GUI/)
 include_directories (${SFML_INCLUDE_DIR})
 include_directories(third-party/)
@@ -38,10 +40,13 @@ include_directories(third-party/SaveFile/include)
 
 add_subdirectory(third-party/imgui-sfml)
 
-add_executable(MyEmulator
+add_executable(ChonkyBoy
     src/main.cpp
-    src/MyEmulator.cpp
+    src/gb.cpp
     src/GUI/gui.cpp
+    src/Core/cpu.cpp
+    src/Core/memory.cpp
+    src/Cart/cart.cpp
 
     third-party/imgui/imgui_draw.cpp
     third-party/imgui/imgui_demo.cpp
@@ -55,11 +60,11 @@ add_executable(MyEmulator
     third-party/fmt/src/format.cc
 )
 
-# set_property(TARGET MyEmulator PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE) # Enable LTO
+# set_property(TARGET ChonkyBoy PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE) # Enable LTO
 find_package(OpenGL REQUIRED)
 
 if(WIN32)
-    target_link_libraries (MyEmulator PRIVATE sfml-system sfml-network sfml-graphics sfml-window Imm32 glu32 ${OPENGL_LIBRARY})
+    target_link_libraries (ChonkyBoy PRIVATE sfml-system sfml-network sfml-graphics sfml-window Imm32 glu32 ${OPENGL_LIBRARY})
 else()
-    target_link_libraries (MyEmulator PRIVATE sfml-system sfml-network sfml-graphics sfml-window ${OPENGL_LIBRARY})
+    target_link_libraries (ChonkyBoy PRIVATE sfml-system sfml-network sfml-graphics sfml-window ${OPENGL_LIBRARY})
 endif()
