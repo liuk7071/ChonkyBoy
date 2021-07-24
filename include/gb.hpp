@@ -8,9 +8,9 @@
 class gb {
 public:
     // Components
-    memory Memory;
+    cart Cart = cart("H:\\Games\\GB\\Tetris (World) (Rev A).gb");
+    memory Memory = memory(&Cart);
     cpu Cpu = cpu(&Memory);
-    cart Cart = cart("what/ever/dir/ectory");
 
     static const int width = 160;
     static const int height = 144;

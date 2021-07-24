@@ -2,7 +2,7 @@
 #include "fmt/format.h"
 
 void gb::step() {
-    u8 opcode = Memory.read(Cpu.pc);
+    u8 opcode = Cpu.Fetch8();
     Cpu.execute(opcode);
 }
 
