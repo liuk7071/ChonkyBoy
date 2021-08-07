@@ -7,5 +7,9 @@ void gb::step() {
 }
 
 void gb::runFrame() {
-    fmt::print ("Frame {}\n", framesPassed++);
+    framesPassed++;
+    while(Cpu.frame_cycles < 70224) {
+        step();
+    }
+    Cpu.frame_cycles = 0;
 }

@@ -11,7 +11,7 @@ class cpu {
 public:
     cpu(memory* memptr);
     memory* Memory;
-    bool debug_cpu = true;
+    bool debug_cpu = false;
     void debug(const char* fmt, ...) {
         if (debug_cpu) {
 		std::va_list args;
@@ -50,6 +50,33 @@ public:
     u16 pc;
     u16 sp;
 
+    bool ime = false;
+
+    u8 GetR8(int number) {
+        switch(number) {
+            case 0: return b.Value();
+            case 1: return c.Value();
+            case 2: return d.Value();
+            case 3: return e.Value();
+            case 4: return h.Value();
+            case 5: return l.Value();
+            case 6: return Memory->Read(hl);
+            case 7: return a.Value();
+        }
+    }
+    void SetR8(int number, u8 value) {
+        switch(number) {
+            case 0: b = value; break;
+            case 1: c = value; break;
+            case 2: d = value; break;
+            case 3: e = value; break;
+            case 4: h = value; break;
+            case 5: l = value; break;
+            case 6: Memory->Write(hl, value); break;
+            case 7: a = value; break;
+        }
+        return;
+    }
     template<int group>
     u16 GetR16(int number) {
         if (group == 1) {
@@ -76,9 +103,60 @@ public:
                 return hl--;
             }
         }
+        else if (group == 3) {
+            switch (number) {
+            case 0:	// BC
+                return bc;
+            case 1:	// DE
+                return de;
+            case 2: // HL
+                return hl;
+            case 3: // AF
+                return af;
+            }
+        }
         else {
             Helpers::panic("Bad R16 group\n");
         }
+    }
+    template<int group>
+    void SetR16(int number, u16 value) {
+        if (group == 1) {
+            switch (number) {
+            case 0:	// BC
+                bc = value;
+                break;
+            case 1:	// DE
+                de = value;
+                break;
+            case 2: // HL
+                hl = value;
+                break;
+            case 3: // SP
+                sp = value;
+                break;
+            }
+        }
+        else if (group == 3) {
+            switch (number) {
+            case 0:	// BC
+                bc = value;
+                break;
+            case 1:	// DE
+                de = value;
+                break;
+            case 2: // HL
+                hl = value;
+                break;
+            case 3: // AF
+                af = value;
+                break;
+            }
+        }
+        else {
+            Helpers::panic("Bad R16 group\n");
+        }
+        return;
     }
 	bool CheckForCondition(uint8_t opcode) {
         if (opcode & 1) // There is no condition
@@ -101,6 +179,19 @@ public:
     }
     u8 Fetch8();
     u16 Fetch16();
+
+    void Push(u16 data) {
+        sp -= 2;
+        Memory->Write16(sp, data); 
+        frame_cycles += 8;
+        return;
+    }
+    u16 Pop() {
+        u16 data = Memory->Read16(sp);
+        sp += 2;
+        frame_cycles += 8;
+        return data;
+    }
 
     void execute(u8 opcode);
     int frame_cycles = 0;
