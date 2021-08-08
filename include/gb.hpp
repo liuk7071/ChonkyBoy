@@ -4,6 +4,7 @@
 #include "cpu.hpp"
 #include "memory.hpp"
 #include "cart.hpp"
+#include "ppu.hpp"
 
 class gb {
 public:
@@ -12,7 +13,8 @@ public:
     cart Cart = cart("C:\\Users\\zacse\\Downloads\\06-ld r,r.gb");
     //cart Cart = cart("C:\\Users\\zacse\\Downloads\\09-op r,r.gb");
     //cart Cart = cart("C:\\Users\\zacse\\Downloads\\07-jr,jp,call,ret,rst.gb");
-    memory Memory = memory(&Cart);
+    ppu Ppu = ppu();
+    memory Memory = memory(&Cart, &Ppu);
     cpu Cpu = cpu(&Memory);
 
     static const int width = 160;
@@ -23,9 +25,4 @@ public:
 
     bool isRunning = false;
     int framesPassed = 0;
-    std::array <u8, width * height * 4> framebuffer; // 160x144 RGBA framebuffer
-
-    gb() {
-        framebuffer.fill (0xFF);
-    }
 };

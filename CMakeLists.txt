@@ -24,6 +24,7 @@ endif()
 include_directories(${PROJECT_SOURCE_DIR}/include/)
 include_directories(${PROJECT_SOURCE_DIR}/include/Core)
 include_directories(${PROJECT_SOURCE_DIR}/include/Cart)
+include_directories(${PROJECT_SOURCE_DIR}/include/PPU)
 include_directories(${PROJECT_SOURCE_DIR}/include/GUI/)
 include_directories (${SFML_INCLUDE_DIR})
 include_directories(third-party/)
@@ -47,6 +48,7 @@ add_executable(ChonkyBoy
     src/Core/cpu.cpp
     src/Core/memory.cpp
     src/Cart/cart.cpp
+    src/PPU/ppu.cpp
 
     third-party/imgui/imgui_draw.cpp
     third-party/imgui/imgui_demo.cpp

@@ -149,6 +149,7 @@ public:
                 hl = value;
                 break;
             case 3: // AF
+                value &= ~0b1111;   // Low 4 bits of F are always 0
                 af = value;
                 break;
             }

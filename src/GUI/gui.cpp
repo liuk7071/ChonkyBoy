@@ -89,7 +89,7 @@ void GUI::showDisplay() {
     const auto scale_y = size.y / gb::height;
     const auto scale = scale_x < scale_y ? scale_x : scale_y;
 
-    display.update (emulator.framebuffer.data()); // Present the buffer that's not being currently written to
+    display.update (emulator.Ppu.framebuffer.data()); // Present the buffer that's not being currently written to
     sf::Sprite sprite (display);
     sprite.setScale (scale, scale);
     ImVec2 image_size(scale * gb::width, scale * gb::height);

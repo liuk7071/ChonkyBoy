@@ -89,7 +89,7 @@ void cpu::execute(u8 opcode) {
         N = false;
         HC = (hl & 0xfff) + (r16 & 0xfff) > 0xfff;
         C = (res >> 16) & 1;
-        hl = u16(res);
+        hl += r16;
         break;
     }
     case 0x0a: case 0x1a: case 0x2a: case 0x3a: {   // LD A, (r16)
@@ -107,7 +107,7 @@ void cpu::execute(u8 opcode) {
         u8 temp = a.Value();
         u8 carry = C.Value();
         a = (a.Value() >> 1) | (carry << 7);
-        Z = (temp == 0);
+        Z = false;
         N = false;
         HC = false;
         C = temp & 1;
@@ -228,6 +228,7 @@ void cpu::execute(u8 opcode) {
             N = false;
             HC = false;
             C = (temp & 0x80) >> 7;
+            SetR8(opcode & 7, r8);
             break; 
         }
         case 0x18 ... 0x1f: {   // RR r8
@@ -236,7 +237,7 @@ void cpu::execute(u8 opcode) {
             u8 temp = r8;
             u8 carry = C.Value();
             r8 = (r8 >> 1) | (carry << 7);
-            Z = (temp == 0);
+            Z = (r8 == 0);
             N = false;
             HC = false;
             C = temp & 1;
@@ -277,7 +278,7 @@ void cpu::execute(u8 opcode) {
         u16 res = u16(a.Value() + operand + C.Value());
         Z = ((res & 0xff) == 0);
         N = false;
-        HC = C.Value() ? (operand & 0xf) + (a.Value() & 0xf) >= 0xf : (operand & 0xf) + (a.Value() & 0xf) > 0xf;
+        HC = (C.Value()) ? (operand & 0xf) + (a.Value() & 0xf) >= 0xf : (operand & 0xf) + (a.Value() & 0xf) > 0xf;
         C = (res >> 8) & 1;
         a = (res & 0xff);
         break;
@@ -303,6 +304,11 @@ void cpu::execute(u8 opcode) {
     case 0xe0: {    // LD (FF00+u8), a
         debug("0x%04x | 0x%02x | LD (FF00+u8), a\n", pc-1, opcode);
         Memory->Write(0xff00 + Fetch8(), a.Value());
+        break;
+    }
+    case 0xe2: {    // LD (FF00+c), a
+        debug("0x%04x | 0x%02x | LD (FF00+c), a\n", pc-1, opcode);
+        Memory->Write(0xff00 + c.Value(), a.Value());
         break;
     }
     case 0xe6: {    // AND A, u8

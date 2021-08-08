@@ -3,12 +3,14 @@
 #include <sstream>
 #include "utils.hpp"
 #include "cart.hpp"
+#include "ppu.hpp"
 #include "BitField.hpp"
 
 class memory {
 public:
-    memory(cart* cartptr);
+    memory(cart* cartptr, ppu* ppuptr);
     cart* Cart;
+    ppu* PPU;
     
     void Write(u16 addr, u8 data);
     void Write16(u16 addr, u16 data);
