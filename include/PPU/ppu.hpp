@@ -22,7 +22,7 @@ public:
         OAM,
         Drawing
     };
-    Mode mode = VBlank;
+    Mode mode = OAM;
     void RenderBGLine();
 
     // IO

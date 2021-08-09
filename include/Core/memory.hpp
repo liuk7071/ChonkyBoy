@@ -1,5 +1,6 @@
 #pragma once
 #include <array>
+#include <fstream>
 #include <sstream>
 #include "utils.hpp"
 #include "cart.hpp"
@@ -9,6 +10,7 @@
 class memory {
 public:
     memory(cart* cartptr, ppu* ppuptr);
+    const char* bootrom_path = "H:\\bootrom.gb";
     cart* Cart;
     ppu* PPU;
     
@@ -17,6 +19,10 @@ public:
     u8 Read(u16 addr);
     u16 Read16(u16 addr);
 
+    u8 ReadBootrom(u16 addr);
+    bool bootrom_enabled = true;
+
+    u8 bootrom[256];
     u8 wram[8192];
     u8 hram[127];
     u8 IE;

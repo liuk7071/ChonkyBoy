@@ -12,6 +12,7 @@ public:
     cpu(memory* memptr);
     memory* Memory;
     bool debug_cpu = false;
+    bool skip_bootrom = false;
     void debug(const char* fmt, ...) {
         if (debug_cpu) {
 		std::va_list args;
@@ -47,7 +48,7 @@ public:
         BitField <8, 8, u16> h;
     };
     
-    u16 pc;
+    u16 pc = 0;
     u16 sp;
 
     bool ime = false;

@@ -3,18 +3,26 @@
 cpu::cpu(memory* memptr) {
     Memory = memptr;
 
-    // Initialize registers
-    a = 0x01;
-    f = 0xb0;
-    b = 0x0;
-    c = 0x13;
-    d = 0x0;
-    e = 0xd8;
-    h = 0x01;
-    l = 0x4d;
+    // Initialize registers if skipping the bootrom
+    if(skip_bootrom) {
+        a = 0x01;
+        f = 0xb0;
+        b = 0x0;
+        c = 0x13;
+        d = 0x0;
+        e = 0xd8;
+        h = 0x01;
+        l = 0x4d;
+        sp = 0xfffe;
+        pc = 0x100;
 
-    pc = 0x100;
-    sp = 0xfffe;
+        Memory->bootrom_enabled = false;
+        Memory->PPU->mode = ppu::VBlank;
+        Memory->PPU->ly = 0x91;
+        Memory->PPU->lcdc = 0x91;
+        Memory->PPU->bgp = 0xfc;
+    }
+    
 }
 
 u8 cpu::Fetch8() {
@@ -97,6 +105,17 @@ void cpu::execute(u8 opcode) {
         a = Memory->Read(GetR16<2>((opcode >> 4) & 3));
         break;
     }
+    case 0x17: {    // RLA
+        debug("0x%04x | 0x%02x | RLA\n", pc-1, opcode);
+        u8 temp = a.Value();
+        u8 carry = C.Value();
+        a = (a.Value() << 1) | carry;
+        Z = false;
+        N = false;
+        HC = false;
+        C = (temp & 0x80) >> 7;
+        break;
+    }
     case 0x18: {    // JR s8
         debug("0x%04x | 0x%02x | JR s8\n", pc-1, opcode);
         pc += s8(Fetch8());
@@ -134,6 +153,28 @@ void cpu::execute(u8 opcode) {
         SetR8((opcode >> 3) & 7, GetR8(opcode & 7));
         break;
     }
+    case 0x80 ... 0x87: {   // ADD A, r8
+        debug("0x%04x | 0x%02x | ADD A, r8\n", pc-1, opcode);
+        u8 operand = GetR8(opcode & 7);
+        u8 res = a.Value() + operand;
+        Z = (res == 0);
+        N = true;
+        HC = (operand & 0xf) + (a.Value() & 0xf) > 0xf;
+        C = res < a.Value();
+        a = res;
+        break;
+    }
+    case 0x90 ... 0x97: {    // SUB A, r8
+        debug("0x%04x | 0x%02x | SUB A, r8\n", pc-1, opcode);
+        u8 operand = GetR8(opcode & 7);
+        u8 res = a.Value() - operand;
+        Z = (res == 0);
+        N = true;
+        HC = (operand & 0xf) > (a.Value() & 0xf);
+        C = res > a.Value();
+        a = res;
+        break;
+    }
     case 0xa0 ... 0xa7: {   // AND A, r8
         debug("0x%04x | 0x%02x | AND A, r8\n", pc-1, opcode);
         a = a.Value() & GetR8(opcode & 7);
@@ -160,6 +201,16 @@ void cpu::execute(u8 opcode) {
         HC = false;
         C = false;
         break; 
+    }
+    case 0xb8 ... 0xbf: {   // CP A, r8
+        debug("0x%04x | 0x%02x | CP A, r8\n", pc-1, opcode);
+        u8 operand = GetR8(opcode & 7);
+        u8 res = a.Value() - operand;
+        Z = (res == 0);
+        N = true;
+        HC = (operand & 0xf) > (a.Value() & 0xf);
+        C = res > a.Value();
+        break;
     }
     case 0xc0: case 0xd0: case 0xc8: case 0xd8: case 0xc9: {    // RET Condition
         debug("0x%04x | 0x%02x | RET Cond\n", pc-1, opcode);
@@ -231,6 +282,18 @@ void cpu::execute(u8 opcode) {
             SetR8(opcode & 7, r8);
             break; 
         }
+        case 0x10 ... 0x17: {   // RL r8
+            debug("0x%04x | 0x%02x | RL r8\n", pc-1, opcode);
+            u8 r8 = GetR8(opcode & 7);
+            u8 temp = r8;
+            r8 = (r8 << 1) | C.Value();
+            Z = (r8 == 0);
+            N = false;
+            HC = false;
+            C = (temp & 0x80) >> 7;
+            SetR8(opcode & 7, r8);
+            break; 
+        }
         case 0x18 ... 0x1f: {   // RR r8
             debug("0x%04x | 0x%02x | RR r8\n", pc-1, opcode);
             u8 r8 = GetR8(opcode & 7);
@@ -264,6 +327,16 @@ void cpu::execute(u8 opcode) {
             N = false;
             HC = false;
             SetR8(opcode & 7, r8);
+            break;
+        }
+        case 0x40 ... 0x7f: {   // BIT pos, r8
+            debug("0x%04x | 0x%02x | BIT pos, r8\n", pc-1, opcode);
+            u8 pos = (opcode >> 3) & 7;
+            u8 r8 = GetR8(opcode & 7);
+            u8 bit = (r8 >> pos) & 1;
+            Z = (bit == 0);
+            N = false;
+            HC = false;
             break;
         }
 

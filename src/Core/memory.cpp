@@ -3,6 +3,15 @@
 memory::memory(cart* cartptr, ppu* ppuptr) {
     Cart = cartptr;
     PPU = ppuptr;
+    //bootrom = fopen(bootrom_path, "r");
+
+    std::ifstream file{bootrom_path, std::ios::binary};
+    if (!file.is_open()) {
+        printf("Failed to open %s\n", bootrom_path);
+        exit(1);
+    }
+    file.read((char*)bootrom, 256);
+    file.close();
 }
 
 void memory::Write(u16 addr, u8 data) {
@@ -39,6 +48,18 @@ void memory::Write(u16 addr, u8 data) {
     if(addr == 0xff0f) {
         IF = data; return;
     }
+    if(addr == 0xff11) {
+        return;
+    }
+    if(addr == 0xff12) {
+        return;
+    }
+    if(addr == 0xff13) {
+        return;
+    }
+    if(addr == 0xff14) {
+        return;
+    }
     if(addr == 0xff24) {
         return;            
     }
@@ -69,6 +90,10 @@ void memory::Write(u16 addr, u8 data) {
     if(addr == 0xff49) {    // OBP1
         return;
     }
+    if(addr == 0xff50) {
+        bootrom_enabled = false;
+        return;
+    }
     if(addr == 0xffff) {
         IE = data; return;
     }
@@ -82,17 +107,28 @@ void memory::Write16(u16 addr, u16 data) {
 }
 
 u8 memory::Read(u16 addr) {
+    if(addr >= 0x0000 && addr < 0x0100) {
+        if (bootrom_enabled) {
+            return bootrom[addr];
+        }
+        else {
+            return Cart->read(addr);
+        }
+    }
+    if(addr >= 0x0100 && addr <= 0x3fff) {
+        return Cart->read(addr);
+    }
     if(addr >= 0xc000 && addr <= 0xfdff) {
         return wram[addr & 0x1fff];
     }
     if(addr >= 0xff80 && addr <= 0xfffe) {
         return hram[addr & 0x7f];
     }
-    if(addr >= 0x0000 && addr <= 0x3fff) {
-        return Cart->read(addr);
-    }
     if(addr >= 0x4000 && addr <= 0x7fff) {
         return Cart->read(addr);
+    }
+    if(addr == 0xff42) {
+        return PPU->scy;
     }
     if(addr == 0xff44) {    // LY
         return PPU->ly;
@@ -105,3 +141,5 @@ u16 memory::Read16(u16 addr) {
     u8 byte2 = Read(addr + 1);
     return byte1 | (byte2 << 8);
 }
+
+

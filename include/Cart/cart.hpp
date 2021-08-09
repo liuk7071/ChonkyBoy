@@ -5,7 +5,7 @@
 class cart {
 public:
     cart(const char* dir);
-    FILE* data;
+    std::vector<u8> rom;
 
     u8 read(u16 addr);
 };

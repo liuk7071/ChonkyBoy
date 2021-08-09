@@ -2,9 +2,6 @@
 
 ppu::ppu() {
     framebuffer.fill (0xff);
-    lcdc = 0x91;
-    ly = 0x91;
-    bgp = 0xfc;
 }
 
 u16 ppu::Read16(u16 addr) {
