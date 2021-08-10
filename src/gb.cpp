@@ -6,6 +6,7 @@ void gb::step() {
     int old_cycles = Cpu.frame_cycles; 
     Cpu.execute(opcode);
     Ppu.Tick(Cpu.frame_cycles - old_cycles);
+    
 }
 
 void gb::runFrame() {

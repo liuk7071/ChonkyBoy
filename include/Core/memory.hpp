@@ -1,4 +1,5 @@
 #pragma once
+#include <SFML/Graphics.hpp>
 #include <array>
 #include <fstream>
 #include <sstream>
@@ -28,4 +29,8 @@ public:
     u8 IE;
     u8 IF;
     u8 TAC;
+    u8 TMA;
+
+    u8 joyp;
+    void HandleJOYP();
 };

@@ -196,5 +196,5 @@ public:
     }
 
     void execute(u8 opcode);
-    int frame_cycles = 0;
+    int frame_cycles = 70224;
 };

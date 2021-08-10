@@ -4,6 +4,19 @@
 #include "gui.hpp"
 #include "gb.hpp"
 
+const sf::Keyboard::Key ActionButtonKeyMappings[] = {
+    sf::Keyboard::Z,    // A
+    sf::Keyboard::X,    // B
+    sf::Keyboard::C,    // Select
+    sf::Keyboard::Enter // Start
+};
+const sf::Keyboard::Key DirectionButtonKeyMappings[] = {
+    sf::Keyboard::Right,// Right
+    sf::Keyboard::Left, // Left
+    sf::Keyboard::Up,   // Up
+    sf::Keyboard::Down  // Down
+};
+
 GUI::GUI (gb& emulator) : window(sf::VideoMode(800, 600), "ChonkyBoy"), emulator(emulator) {
     window.setFramerateLimit(60); // cap FPS to 60
     ImGui::SFML::Init(window);    // Init Imgui-SFML
@@ -19,6 +32,12 @@ GUI::GUI (gb& emulator) : window(sf::VideoMode(800, 600), "ChonkyBoy"), emulator
 
 void GUI::update() {
     sf::Event event;
+
+    if (emulator.isRunning)
+        emulator.runFrame();
+    
+    
+
     
     while (window.pollEvent(event)) { // Poll events
         ImGui::SFML::ProcessEvent(event);
@@ -26,14 +45,10 @@ void GUI::update() {
             window.close();
     }
 
-    if (emulator.isRunning)
-        emulator.runFrame();
-
     ImGui::SFML::Update(window, deltaClock.restart()); // Update imgui-sfml
 
     showMenuBar(); // Render GUI stuff
     showDisplay();
-    ImGui::ShowDemoWindow();
 
     drawGUI();
 }

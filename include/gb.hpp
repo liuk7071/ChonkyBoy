@@ -13,6 +13,7 @@ public:
     //cart Cart = cart("C:\\Users\\zacse\\Downloads\\06-ld r,r.gb");
     //cart Cart = cart("C:\\Users\\zacse\\Downloads\\09-op r,r.gb");
     //cart Cart = cart("C:\\Users\\zacse\\Downloads\\07-jr,jp,call,ret,rst.gb");
+    //cart Cart = cart("C:\\Users\\zacse\\Downloads\\bgb\\bgbtest.gb");
     ppu Ppu = ppu();
     memory Memory = memory(&Cart, &Ppu);
     cpu Cpu = cpu(&Memory);

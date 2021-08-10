@@ -84,6 +84,16 @@ void cpu::execute(u8 opcode) {
         SetR8((opcode >> 3) & 7, value);
         break;
     }
+    case 0x07: {    // RLCA
+        debug("0x%04x | 0x%02x | RLCA\n", pc-1, opcode);
+        u8 temp = a;
+        a = (a << 1) | ((temp >> 7) & 1);
+        Z = false;
+        N = false;
+        HC = false;
+        C = (temp >> 7) & 1; 
+        break;
+    }
     case 0x08:{ // LD (u16), sp
         debug("0x%04x | 0x%02x | LD (u16), sp\n", pc-1, opcode);
         u16 addr = Fetch16();
@@ -103,6 +113,13 @@ void cpu::execute(u8 opcode) {
     case 0x0a: case 0x1a: case 0x2a: case 0x3a: {   // LD A, (r16)
         debug("0x%04x | 0x%02x | LD A, (r16)\n", pc-1, opcode);
         a = Memory->Read(GetR16<2>((opcode >> 4) & 3));
+        break;
+    }
+    case 0x0b: case 0x1b: case 0x2b: case 0x3b: {   // DEC r16
+        debug("0x%04x | 0x%02x | DEC r16\n", pc-1, opcode);
+        u16 r16 = GetR16<1>((opcode >> 4) & 3);
+        r16--;
+        SetR16<1>((opcode >> 4) & 3, r16);
         break;
     }
     case 0x17: {    // RLA
@@ -162,6 +179,17 @@ void cpu::execute(u8 opcode) {
         HC = (operand & 0xf) + (a.Value() & 0xf) > 0xf;
         C = res < a.Value();
         a = res;
+        break;
+    }
+    case 0x88 ... 0x8f: {   // ADC A, r8
+        debug("0x%04x | 0x%02x | ADC A, u8\n", pc-1, opcode);
+        u8 operand = GetR8(opcode & 7);
+        u16 res = u16(a.Value() + operand + C.Value());
+        Z = ((res & 0xff) == 0);
+        N = false;
+        HC = (C.Value()) ? (operand & 0xf) + (a.Value() & 0xf) >= 0xf : (operand & 0xf) + (a.Value() & 0xf) > 0xf;
+        C = (res >> 8) & 1;
+        a = (res & 0xff);
         break;
     }
     case 0x90 ... 0x97: {    // SUB A, r8
@@ -307,6 +335,16 @@ void cpu::execute(u8 opcode) {
             SetR8(opcode & 7, r8);
             break;
         }
+        case 0x20 ... 0x27: {   // // SLA r8
+            debug("0x%04x | 0x%02x | SLA r8\n", pc-1, opcode);
+            u8 r8 = GetR8(opcode & 7);
+            C = (r8 >> 7) & 1;
+            r8 <<= 1;
+            Z = (r8 == 0);
+            N = false;
+            HC = false;
+            SetR8(opcode & 7, r8);
+        }
         case 0x30 ... 0x37: {   // SWAP r8
             debug("0x%04x | 0x%02x | SWAP r8\n", pc-1, opcode);
             u8 r8 = GetR8(opcode & 7);
@@ -337,6 +375,14 @@ void cpu::execute(u8 opcode) {
             Z = (bit == 0);
             N = false;
             HC = false;
+            break;
+        }
+        case 0x80 ... 0xbf: {   // RES pos, r8
+            debug("0x%04x | 0x%02x | RES pos, r8\n", pc-1, opcode);
+            u8 r16 = GetR8(opcode & 7);
+            u8 pos = (opcode >> 3) & 7;
+            r16 &= ~(1 << pos);
+            SetR8(opcode & 7, r16);
             break;
         }
 
@@ -459,5 +505,18 @@ void cpu::execute(u8 opcode) {
 
     default:
         Helpers::panic("Unhandled opcode 0x{:02X}\n", opcode);
+    }
+
+    if(Memory->PPU->VBlankIRQ) Memory->IF |= 1;
+    u8 interrupt = Memory->IF & Memory->IE;
+    if(interrupt && ime) {    // Handle interrupts
+        if(interrupt == 1) {
+            Memory->IF &= ~1;
+            Push(pc);
+            pc = 0x40;
+            ime = false;
+            frame_cycles += 20;
+            Memory->PPU->VBlankIRQ = false;
+        }
     }
 }

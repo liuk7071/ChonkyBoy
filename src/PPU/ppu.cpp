@@ -47,6 +47,7 @@ void ppu::Tick(int cycles) {
             break;
         }
         case VBlank: {
+            if(ly == 144) VBlankIRQ = true;
             if(current_cycles >= 456) {
                 ly++;
                 current_cycles = 0;
