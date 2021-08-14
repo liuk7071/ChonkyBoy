@@ -28,13 +28,18 @@ void ppu::Tick(int cycles) {
         case OAM: {
             if(current_cycles >= 80) {
                 mode = Drawing;
+                stat &= ~0b11;
+                stat |= 3;
             }
             break;
         }
         case Drawing: {
             if(current_cycles >= 172) {
                 RenderBGLine();
+                RenderSpriteLine();
                 mode = HBlank;
+                stat &= ~0b11;
+                stat |= 0;
             }
             break;
         }
@@ -43,6 +48,8 @@ void ppu::Tick(int cycles) {
                 ly++;
                 current_cycles = 0;
                 mode = (ly == 144) ? VBlank : OAM;
+                stat &= ~0b11;
+                stat |= (ly == 144) ? 1 : 2;
             }
             break;
         }
@@ -54,6 +61,8 @@ void ppu::Tick(int cycles) {
             }
             if(ly == 154) {
                 mode = OAM;
+                stat &= ~0b11;
+                stat |= 2;
                 ly = 0;
             }
             break;
@@ -85,5 +94,54 @@ void ppu::RenderBGLine() {
         u8 color_index = (bgp >> (pixel << 1)) & 3;
         color_index *= 4;
         SetPixel(scrolledx, ly, palette[color_index], palette[color_index + 1], palette[color_index + 2], palette[color_index + 3]);
+    }
+}
+void ppu::FetchOAM() {
+    sprite_count = 0;
+    u8 sprite_height =  obj_size.Value() ? 16 : 8;
+
+    for (int i = 0; i < 0xa0 && sprite_count < 10; i += 4) {
+        Sprite sprite;
+        sprite.ypos = (oam[i] - 16);
+        sprite.xpos = (oam[i + 1] - 8);
+        sprite.tilenum = (oam[i + 2]);
+        sprite.flags = (oam[i + 3]);
+
+        if (ly >= (s16)sprite.ypos && ly < ((s16)sprite.ypos + sprite_height)) {
+            sprites[sprite_count].ypos      = sprite.ypos;
+            sprites[sprite_count].xpos      = sprite.xpos;
+            sprites[sprite_count].tilenum   = sprite.tilenum;
+            sprites[sprite_count].flags     = sprite.flags;
+            sprite_count++;
+        }
+    }
+}
+void ppu::RenderSpriteLine() {
+    if(!obj_enable.Value()) return;
+
+    FetchOAM();
+    for(int i = 0; i < sprite_count; i++) {
+        u16 tiley;
+        if(obj_size.Value())
+            tiley = (sprites[i].yflip.Value()) ? ((ly - sprites[i].ypos) ^ 15) : ly - sprites[i].ypos;
+        else
+            tiley = (sprites[i].yflip.Value()) ? ((ly - sprites[i].ypos) ^ 7) & 7 : (ly - sprites[i].ypos) & 7;
+        u8 obp = (sprites[i].palette) ? obp1 : obp0;
+        u16 tile_index = obj_size.Value() ? sprites[i].tilenum & ~1 : sprites[i].tilenum;
+        u16 tileline = Read16(0x8000 | ((tile_index << 4) + (tiley << 1)));
+
+        for(int x = 0; x < 8; x++) {
+            s8 tilex = (sprites[i].xflip.Value()) ? 7 - x : x;
+            u8 high = (tileline >> 8);
+            high >>= (7 - tilex);
+            high &= 1;
+            u8 low = (tileline & 0xff);
+            low >>= (7 - tilex);
+            low &= 1;
+            u8 pixel = (high << 1) | low;
+            u8 color_index = (obp >> (pixel << 1)) & 3;
+            color_index *= 4;
+            SetPixel(sprites[i].xpos + tilex, ly, palette[color_index], palette[color_index + 1], palette[color_index + 2], palette[color_index + 3]);
+        }
     }
 }

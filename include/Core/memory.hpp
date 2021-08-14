@@ -25,11 +25,13 @@ public:
 
     u8 bootrom[256];
     u8 wram[8192];
+    u8 extram[8192];
     u8 hram[127];
     u8 IE;
     u8 IF;
     u8 TAC;
     u8 TMA;
+    u8 div, tima;
 
     u8 joyp;
     void HandleJOYP();

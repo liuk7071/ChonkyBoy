@@ -16,10 +16,13 @@ memory::memory(cart* cartptr, ppu* ppuptr) {
 
 void memory::Write(u16 addr, u8 data) {
     if(addr >= 0x0000 && addr <= 0x3fff) {  // ROM
-        return;
+        Cart->write(addr, data); return;
+    }
+    if(addr >= 0x4000 && addr <= 0x7fff) {  // ROM
+        Cart->write(addr, data); return;
     }
     if(addr >= 0xfe00 && addr <= 0xfe9f) {  // OAM
-        return;
+        if((PPU->mode != ppu::OAM) && (PPU->mode != ppu::Drawing)) PPU->oam[addr & 0xff] = data; return;
     }
     if(addr >= 0xfea0 && addr <= 0xfeff) {
         return;
@@ -28,7 +31,11 @@ void memory::Write(u16 addr, u8 data) {
         return;
     }
     if(addr >= 0x8000 && addr <= 0x9fff) {  // VRAM
-        PPU->vram[addr & 0x1fff] = data; return;
+        if(PPU->mode != ppu::Drawing) PPU->vram[addr & 0x1fff] = data; return;
+    }
+    if(addr >= 0xa000 && addr <= 0xbfff) {
+        Cart->write(addr, data); 
+        return;
     }
     if(addr >= 0xc000 && addr <= 0xfdff) {
         wram[addr & 0x1fff] = data; return;
@@ -49,6 +56,16 @@ void memory::Write(u16 addr, u8 data) {
     }
     if(addr == 0xff02) {
         return;
+    }
+    if(addr == 0xff03) {
+        Helpers::warn("Write to ff03h\n");
+        return;
+    }
+    if(addr == 0xff04) {    // DIV
+        div = 0; return;
+    }
+    if(addr == 0xff05) {    // TIMA
+        tima = data; return;
     }
     if(addr == 0xff06) {
         TMA = data; return;
@@ -122,10 +139,17 @@ void memory::Write(u16 addr, u8 data) {
     if(addr == 0xff26) {
         return;           
     }
+    if(addr >= 0xff30 && addr <= 0xff3f) {  // Wave pattern ram
+        return;
+    }
     if(addr == 0xff40) {    // LCDC
         PPU->lcdc = data; return;
     }
     if(addr == 0xff41) {    // STAT
+        data &= ~0b11;
+        PPU->stat &= 0b11111100;
+        PPU->stat |= data; 
+        printf("%x\n", PPU->stat);
         return;
     }
     if(addr == 0xff42) {    // SCY
@@ -135,16 +159,20 @@ void memory::Write(u16 addr, u8 data) {
         PPU->scx = data; return;
     }
     if(addr == 0xff46) {    // OAM DMA
+        u16 start_address = u16(data << 8);
+        for(u8 i = 0; i < 0xa0; i++) {
+            PPU->oam[i] = Read(start_address | i);
+        }
         return;
     }
     if(addr == 0xff47) {    // BGP
         PPU->bgp = data; return;
     }
     if(addr == 0xff48) {    // OBP0
-        return;
+        PPU->obp0 = data; return;
     }
     if(addr == 0xff49) {    // OBP1
-        return;
+        PPU->obp1 = data; return;
     }
     if(addr == 0xff4a) {
         PPU->wy = data; return;
@@ -180,6 +208,12 @@ u8 memory::Read(u16 addr) {
     if(addr >= 0x0100 && addr <= 0x3fff) {
         return Cart->read(addr);
     }
+    if(addr >= 0x8000 && addr <= 0x9fff) {  // VRAM
+        return !(PPU->mode == ppu::Drawing) ? 0xff : PPU->vram[addr & 0x1fff];
+    }
+    if(addr >= 0xa000 && addr <= 0xbfff) {
+        return Cart->read(addr);
+    }
     if(addr >= 0xc000 && addr <= 0xfdff) {
         return wram[addr & 0x1fff];
     }
@@ -189,12 +223,25 @@ u8 memory::Read(u16 addr) {
     if(addr >= 0x4000 && addr <= 0x7fff) {
         return Cart->read(addr);
     }
+    if(addr >= 0xfe00 && addr <= 0xfe9f) {  // OAM
+        if((PPU->mode != ppu::OAM) && (PPU->mode != ppu::Drawing)) return PPU->oam[addr & 0xff];
+        else return 0xff;
+    }
     if(addr == 0xff00) {    // JOYP
         HandleJOYP();
         return joyp;
     }
+    if(addr == 0xff04) {    // DIV
+        return div;
+    }
+    if(addr >= 0xff30 && addr <= 0xff3f) {  // Wave pattern ram
+        return 0;
+    }
     if(addr == 0xff40) {
         return PPU->lcdc;
+    }
+    if(addr == 0xff41) {
+        return PPU->stat;
     }
     if(addr == 0xff42) {
         return PPU->scy;

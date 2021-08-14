@@ -10,8 +10,9 @@
 class cpu {
 public:
     cpu(memory* memptr);
+    bool halted = false;
     memory* Memory;
-    bool debug_cpu = false;
+    bool debug_cpu = true;
     bool skip_bootrom = false;
     void debug(const char* fmt, ...) {
         if (debug_cpu) {
@@ -196,5 +197,7 @@ public:
     }
 
     void execute(u8 opcode);
-    int frame_cycles = 70224;
+    int frame_cycles = 0;
+    int div_cycles = 0, tima_cycles = 0;
+    int tima_clock_speeds[4] = {1024, 16, 64, 256};
 };
