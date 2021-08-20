@@ -10,7 +10,10 @@ class gb {
 public:
     // Components
     //cart Cart = cart("H:\\Games\\GB\\Tetris (World) (Rev A).gb");
+    //cart Cart = cart("H:\\Games\\GB\\Dr. Mario (World).gb");
+    //cart Cart = cart("H:\\Games\\GB\\Super Mario Land (World).gb");
     cart Cart = cart("H:\\Games\\GB\\Pokemon - Blue Version (USA, Europe) (SGB Enhanced).gb");
+    //cart Cart = cart("H:\\Games\\GB\\Pokemon - Silver Version (UE) [C][!].gbc");
     //cart Cart = cart("C:\\Users\\zacse\\Downloads\\cpu_instrs.gb");
     //cart Cart = cart("C:\\Users\\zacse\\Downloads\\01-special.gb");
     //cart Cart = cart("C:\\Users\\zacse\\Downloads\\02-interrupts.gb");
@@ -23,6 +26,7 @@ public:
     //cart Cart = cart("C:\\Users\\zacse\\Downloads\\09-op r,r.gb");
     //cart Cart = cart("C:\\Users\\zacse\\Downloads\\10-bit ops.gb");
     //cart Cart = cart("C:\\Users\\zacse\\Downloads\\11-op a,(hl).gb");
+    //cart Cart = cart("C:\\Users\\zacse\\Downloads\\instr_timing.gb");
     //cart Cart = cart("C:\\Users\\zacse\\Downloads\\bgb\\bgbtest.gb");
     ppu Ppu = ppu();
     memory Memory = memory(&Cart, &Ppu);

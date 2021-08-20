@@ -14,6 +14,7 @@ public:
     const char* bootrom_path = "H:\\bootrom.gb";
     cart* Cart;
     ppu* PPU;
+    sf::RenderWindow* window;
     
     void Write(u16 addr, u8 data);
     void Write16(u16 addr, u16 data);
@@ -25,7 +26,6 @@ public:
 
     u8 bootrom[256];
     u8 wram[8192];
-    u8 extram[8192];
     u8 hram[127];
     u8 IE;
     u8 IF;
@@ -35,4 +35,5 @@ public:
 
     u8 joyp;
     void HandleJOYP();
+    
 };

@@ -22,16 +22,18 @@ void memory::Write(u16 addr, u8 data) {
         Cart->write(addr, data); return;
     }
     if(addr >= 0xfe00 && addr <= 0xfe9f) {  // OAM
-        if((PPU->mode != ppu::OAM) && (PPU->mode != ppu::Drawing)) PPU->oam[addr & 0xff] = data; return;
+        //if((PPU->mode != ppu::OAM) && (PPU->mode != ppu::Drawing)) PPU->oam[addr & 0xff] = data; return;
+        PPU->oam[addr & 0xff] = data; return;
     }
     if(addr >= 0xfea0 && addr <= 0xfeff) {
         return;
     }
-    if(addr == 0xff7f) {
+    if(addr == 0xff7f) {    // idk tetris writes here
         return;
     }
     if(addr >= 0x8000 && addr <= 0x9fff) {  // VRAM
-        if(PPU->mode != ppu::Drawing) PPU->vram[addr & 0x1fff] = data; return;
+        //if(PPU->mode != ppu::Drawing) PPU->vram[addr & 0x1fff] = data; return;
+        PPU->vram[addr & 0x1fff] = data; return;
     }
     if(addr >= 0xa000 && addr <= 0xbfff) {
         Cart->write(addr, data); 
@@ -188,11 +190,16 @@ void memory::Write(u16 addr, u8 data) {
         IE = data; return;
     }
 
+    // GBC regs
+    if(addr == 0xff56) {
+        return;
+    }
+
     Helpers::panic("Unhandled memory write: 0x{:04X}\n", addr);
 }
 void memory::Write16(u16 addr, u16 data) {
-    Write(addr + 1, (data & 0xff00) >> 8);
     Write(addr, data & 0xff);
+    Write(addr + 1, (data & 0xff00) >> 8);
     return;
 }
 
@@ -209,7 +216,8 @@ u8 memory::Read(u16 addr) {
         return Cart->read(addr);
     }
     if(addr >= 0x8000 && addr <= 0x9fff) {  // VRAM
-        return !(PPU->mode == ppu::Drawing) ? 0xff : PPU->vram[addr & 0x1fff];
+        //return !(PPU->mode == ppu::Drawing) ? 0xff : PPU->vram[addr & 0x1fff];
+        return PPU->vram[addr & 0x1fff];
     }
     if(addr >= 0xa000 && addr <= 0xbfff) {
         return Cart->read(addr);
@@ -224,8 +232,9 @@ u8 memory::Read(u16 addr) {
         return Cart->read(addr);
     }
     if(addr >= 0xfe00 && addr <= 0xfe9f) {  // OAM
-        if((PPU->mode != ppu::OAM) && (PPU->mode != ppu::Drawing)) return PPU->oam[addr & 0xff];
-        else return 0xff;
+        //if((PPU->mode != ppu::OAM) && (PPU->mode != ppu::Drawing)) return PPU->oam[addr & 0xff];
+        //else return 0xff;
+        return PPU->oam[addr & 0xff];
     }
     if(addr == 0xff00) {    // JOYP
         HandleJOYP();
@@ -234,8 +243,74 @@ u8 memory::Read(u16 addr) {
     if(addr == 0xff04) {    // DIV
         return div;
     }
-    if(addr >= 0xff30 && addr <= 0xff3f) {  // Wave pattern ram
+    if(addr == 0xff0f) {
+        return IF;
+    }
+    if(addr == 0xff10) {
         return 0;
+    }
+    if(addr == 0xff11) {
+        return 0;
+    }
+    if(addr == 0xff12) {
+        return 0;
+    }
+    if(addr == 0xff13) {
+        return 0;
+    }
+    if(addr == 0xff14) {
+        return 0;
+    }
+    if(addr == 0xff16) {
+        return 0;
+    }
+    if(addr == 0xff17) {
+        return 0;
+    }
+    if(addr == 0xff18) {
+        return 0;
+    }
+    if(addr == 0xff19) {
+        return 0;
+    }
+    if(addr == 0xff1a) {
+        return 0;
+    }
+    if(addr == 0xff1b) {
+        return 0;
+    }
+    if(addr == 0xff1c) {
+        return 0;
+    }
+    if(addr == 0xff1d) {
+        return 0;
+    }
+    if(addr == 0xff1e) {
+        return 0;
+    }
+    if(addr == 0xff20) {
+        return 0;
+    }
+    if(addr == 0xff21) {
+        return 0;
+    }
+    if(addr == 0xff22) {
+        return 0;
+    }
+    if(addr == 0xff23) {
+        return 0;
+    }
+    if(addr == 0xff24) {
+        return 0;            
+    }
+    if(addr == 0xff25) {
+        return 0;            
+    }
+    if(addr == 0xff26) {
+        return 0;           
+    }
+    if(addr >= 0xff30 && addr <= 0xff3f) {  // Wave pattern ram
+        return 0xff;
     }
     if(addr == 0xff40) {
         return PPU->lcdc;
@@ -249,9 +324,17 @@ u8 memory::Read(u16 addr) {
     if(addr == 0xff44) {    // LY
         return PPU->ly;
     }
+    if(addr == 0xff48) {
+        return PPU->obp0;
+    }
+    if(addr == 0xff49) {
+        return PPU->obp1;
+    }
     if(addr == 0xffff) {
         return IE;
     }
+
+    // GBC regs
 
     Helpers::panic("Unhandled memory read: 0x{:04X}\n", addr);
 }
@@ -291,7 +374,7 @@ void memory::HandleJOYP() {
         keys &= ~(sf::Keyboard::isKeyPressed(ActionButtonKeyMappings[2]) << 2);
         keys &= ~(sf::Keyboard::isKeyPressed(ActionButtonKeyMappings[3]) << 3);
     }
-    joyp |= keys;
+    joyp |= window->hasFocus() ? keys : 0xf;
 }
 
 

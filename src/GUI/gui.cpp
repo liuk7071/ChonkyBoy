@@ -18,6 +18,7 @@ const sf::Keyboard::Key DirectionButtonKeyMappings[] = {
 };
 
 GUI::GUI (gb& emulator) : window(sf::VideoMode(800, 600), "ChonkyBoy"), emulator(emulator) {
+    emulator.Memory.window = &window;   // It needs the window because I'm lazy and I handle input in the memory class
     window.setFramerateLimit(60); // cap FPS to 60
     ImGui::SFML::Init(window);    // Init Imgui-SFML
     display.create (gb::width, gb::height);
@@ -49,6 +50,16 @@ void GUI::update() {
 
     showMenuBar(); // Render GUI stuff
     showDisplay();
+
+    if(ImGui::Begin("Deborgar")) {
+        ImGui::Text("Timers enabled: %d", (emulator.Memory.TAC >> 2) & 1);
+        ImGui::Text("IF: %x", emulator.Memory.IF);
+        ImGui::Text("IE: %x", emulator.Memory.IE);
+        ImGui::Text("IME: ");
+        ImGui::SameLine();
+        ImGui::Checkbox("", &emulator.Cpu.ime);
+        ImGui::End();
+    }
 
     drawGUI();
 }

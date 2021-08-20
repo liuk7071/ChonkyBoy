@@ -12,7 +12,7 @@ public:
     cpu(memory* memptr);
     bool halted = false;
     memory* Memory;
-    bool debug_cpu = true;
+    bool debug_cpu = false;
     bool skip_bootrom = false;
     void debug(const char* fmt, ...) {
         if (debug_cpu) {

@@ -37,6 +37,7 @@ u16 cpu::Fetch16() {
 }
 
 void cpu::execute(u8 opcode) {
+    //printf("ROM bank: %d | RAM bank: %d ", Memory->Cart->RomBank, Memory->Cart->RamBank);
     if(!halted) {
         switch(opcode) {
         case 0x00: debug("0x%04x | 0x%02x | NOP\n", pc-1, opcode); break;   // NOP
@@ -605,7 +606,7 @@ void cpu::execute(u8 opcode) {
         }
         case 0xf8: {    // LD HL, SP+s8
             debug("0x%04x | 0x%02x | LD HL, SP+s8\n", pc-1, opcode);
-            u8 offset = Fetch16();
+            u8 offset = Fetch8();
             Z = false;
             N = false;
             HC = (sp & 0xf) + (offset & 0xf) > 0xf;
@@ -624,8 +625,10 @@ void cpu::execute(u8 opcode) {
             break;
         }
         case 0xfe: {    // CP A, u8
-            debug("0x%04x | 0x%02x | CP A, u8\n", pc-1, opcode);
+            
+            
             u8 operand = Fetch8();
+            debug("0x%04x | 0x%02x | CP %x, %x\n", pc-1, opcode, a.Value(), operand);
             u8 res = a.Value() - operand;
             Z = (res == 0);
             N = true;
@@ -647,7 +650,7 @@ void cpu::execute(u8 opcode) {
         int tima_clock = tima_clock_speeds[Memory->TAC & 3];
         while(tima_cycles >= tima_clock) {
             tima_cycles -= tima_clock;
-            if(Memory->tima == 0xff) {
+            if(Memory->tima >= 0xff) {
                 Memory->tima = Memory->TMA;
                 Memory->IF |= 0b100;
             } else {
@@ -656,11 +659,13 @@ void cpu::execute(u8 opcode) {
         }
     }
     if(Memory->PPU->VBlankIRQ) Memory->IF |= 1;
+    if(Memory->PPU->StatIRQ) Memory->IF |= 0b10;
     u8 interrupt = Memory->IF & Memory->IE;
     if(interrupt) {    // Handle interrupts
         halted = false;
         if(ime) {
-            if(interrupt == 1) {
+            if(interrupt & 1) {
+                //printf("a\n");
                 Memory->IF &= ~1;
                 Push(pc);
                 pc = 0x40;
@@ -668,7 +673,16 @@ void cpu::execute(u8 opcode) {
                 frame_cycles += 20;
                 Memory->PPU->VBlankIRQ = false;
             }
-            if(interrupt == 0b100) {
+            else if(interrupt & 0b10) {
+                Memory->IF &= ~0b10;
+                Push(pc);
+                pc = 0x48;
+                ime = false;
+                frame_cycles += 20;
+                Memory->PPU->StatIRQ = false;
+            }
+            else if(interrupt & 0b100) {
+                printf("a\n");
                 Memory->IF &= ~0b100;
                 Push(pc);
                 pc = 0x50;

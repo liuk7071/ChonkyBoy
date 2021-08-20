@@ -44,6 +44,9 @@ public:
     void RenderBGLine();
     void RenderSpriteLine();
 
+    void LYC();
+    void StatINT();
+    bool StatIRQ = false;
     bool VBlankIRQ = false;
 
     // IO
@@ -60,7 +63,7 @@ public:
     };
     u8 bgp, scx, scy;
     u8 wx, wy;
-    u8 ly;
+    u8 ly, lyc;
     u8 stat;
     u8 obp0, obp1;
 };

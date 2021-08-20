@@ -17,7 +17,7 @@ public:
 
     bool RamEnable = true;
     u8 RomBank = 1;
-    u8 RamBank = 1;
+    u8 RamBank = 0;
     u8 read(u16 addr);
     void write(u16 addr, u8 data);
 };
